@@ -3,3 +3,5 @@ PyPDF2
 fpdf
 matplotlib
 language-tool-python
+pandas
+python-dotenv
