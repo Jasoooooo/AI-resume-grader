@@ -13,8 +13,8 @@ import hashlib
 # ---------- CONFIG ----------
 DATABASE = 'users.db'
 RESUME_DB = 'resumes.db'
-SMTP_EMAIL = os.getenv("SMTP_EMAIL", "your_email@gmail.com")  # Or use st.secrets
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "your_app_password")
+SMTP_EMAIL = st.secrets["SMTP_EMAIL"]
+SMTP_PASSWORD = st.secrets["SMTP_PASSWORD"]
 
 # ---------- DATABASE SETUP ----------
 def init_user_db():
@@ -37,17 +37,19 @@ def hash_password(password):
     return hashlib.sha256(password.encode()).hexdigest()
 
 def extract_keywords(text):
-    return set(re.findall(r'\w+', text.lower()))
+    words = re.findall(r'\w+', text.lower())
+    return set(words + [text.lower()])  # For single and full-phrase matching
 
 def score_resume(text, keywords):
-    words = extract_keywords(text)
-    matched = [kw for kw in keywords if kw in words]
+    text = text.lower()
+    matched = [kw for kw in keywords if kw.lower() in text]
     score = len(matched) / len(keywords) * 100 if keywords else 0
     return score, matched
 
 def check_grammar(text):
-    tool = language_tool_python.LanguageTool('en-US')
-    return len(tool.check(text))
+    tool = language_tool_python.LanguageToolPublicAPI('en-US')
+    matches = tool.check(text)
+    return len(matches)
 
 def generate_pdf(username, score, matched, missing, grammar_issues):
     pdf = FPDF()
@@ -114,9 +116,19 @@ if st.session_state.login:
     st.header("AI Resume Grader")
 
     job_roles = {
-        "Data Scientist": ["python", "machine learning", "data analysis", "pandas", "numpy"],
-        "Web Developer": ["html", "css", "javascript", "react", "sql"],
-        "AI Engineer": ["deep learning", "tensorflow", "pytorch", "neural networks", "nlp"]
+        "Data Scientist": [
+            "python", "machine learning", "data analysis", "pandas", "numpy", "scikit-learn", "regression",
+            "classification", "clustering", "data wrangling", "visualization", "tensorflow", "keras"
+        ],
+        "Web Developer": [
+            "html", "css", "javascript", "react", "sql", "api integration", "responsive design",
+            "version control", "git", "node.js", "frontend", "backend", "web security"
+        ],
+        "AI Engineer": [
+            "deep learning", "tensorflow", "pytorch", "neural networks", "natural language processing",
+            "reinforcement learning", "model deployment", "computer vision", "convolutional networks",
+            "transformers", "bert", "nlp"
+        ]
     }
 
     selected_job = st.selectbox("Select Job Role", list(job_roles.keys()))
