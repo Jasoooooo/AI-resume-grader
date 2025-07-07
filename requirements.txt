@@ -1,2 +1,5 @@
 streamlit
 PyPDF2
+fpdf
+matplotlib
+language-tool-python
